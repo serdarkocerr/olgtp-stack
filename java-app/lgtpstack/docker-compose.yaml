@@ -1,0 +1,28 @@
+version: "3.9"
+networks:
+  observability:
+    external: true
+
+services:
+  app:
+    image: eclipse-temurin:21-jre
+    container_name: lgtpstack-app
+    networks: [observability]
+    volumes:
+      - ./build/libs:/app
+      - ./otel:/otel
+    working_dir: /app
+    command: >
+      java
+      -javaagent:/otel/opentelemetry-javaagent.jar
+      -jar lgtpstack-0.0.1-SNAPSHOT.jar
+    environment:
+      OTEL_SERVICE_NAME: lgtpstack
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_LOGS_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: otlp
+      OTEL_RESOURCE_ATTRIBUTES: service.version=1.0.0,env=local
+    ports:
+      - "8080:8080"

@@ -1,0 +1,36 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.3.5'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.serdar'
+version = '0.0.1-SNAPSHOT'
+description = 'LGTM + OpenTelemetry Java Agent Demo'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+
+	// Core
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+	// Logging (SLF4J + Logback) → Agent bunu otomatik hook’lar
+	implementation 'org.springframework.boot:spring-boot-starter-logging'
+
+	// TEST
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

@@ -1,0 +1,46 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+
+processors:
+  batch:
+  resource:
+    attributes:
+      - key: service.name
+        value: lgtpstack
+      - key: service.version
+        value: "1.0.0"
+      - key: env
+        value: local
+
+exporters:
+  loki:
+    endpoint: http://loki:3100/loki/api/v1/push
+
+  prometheus:
+    endpoint: "0.0.0.0:9464"
+
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+
+
+service:
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [loki]
+
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus]
+
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/tempo]

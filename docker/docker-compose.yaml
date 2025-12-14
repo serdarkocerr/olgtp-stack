@@ -1,0 +1,70 @@
+version: "3.9"
+networks:
+  observability:
+    external: true
+
+services:
+
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: grafana
+    networks: [observability]
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: prometheus
+    networks: [observability]
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  loki:
+    image: grafana/loki:2.9.4
+    container_name: loki
+    networks: [observability]
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki-config.yaml:/etc/loki/local-config.yaml:ro
+      - ./loki-data:/loki
+
+  tempo:
+    image: grafana/tempo:2.4.1
+    container_name: tempo
+    networks: [observability]
+    command: -config.file=/etc/tempo/tempo.yaml
+    ports:
+      - "3200:3200"
+    volumes:
+      - ./tempo-config.yaml:/etc/tempo/tempo.yaml:ro
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.95.0
+    container_name: otel-collector
+    networks: [observability]
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    ports:
+      - "4317:4317" #java otel agent
+      - "4318:4318"
+      - "8888:8888" #collector internal
+      - "9464:9464" #prometheus scrape
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    depends_on:
+      - loki
+      - prometheus
+      - tempo
